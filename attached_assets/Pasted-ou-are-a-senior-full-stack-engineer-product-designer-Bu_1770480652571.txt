@@ -1,0 +1,140 @@
+ou are a senior full-stack engineer + product designer. Build a Strava-style web app as a MOBILE-FIRST PWA (Progressive Web App) optimized for Samsung Android Chrome.
+
+GOAL
+Create a lean running tracker web app that:
+1) Tracks outdoor runs using phone GPS (Geolocation API)
+2) Shows live run metrics (distance, pace, duration, route)
+3) Saves activities locally (IndexedDB) to avoid backend dependency
+4) Awards badges based on achievements
+5) Adds VOICE COACHING: every 1 km, announce split time + a motivational phrase
+6) Has phenomenal UX (fast, clear, modern, delightful micro-interactions)
+7) Uses minimal backend only for optional user sync (can be turned off)
+
+CONSTRAINTS
+- Must work as a web app on Samsung/Android Chrome. Use PWA install prompt and offline mode.
+- Backend must be minimal; default storage is client-side (IndexedDB). No mandatory accounts.
+- Battery-friendly: throttle GPS sampling, smooth path, avoid excessive renders.
+- Privacy-first: user owns data; clear permissions and transparent messaging.
+
+TECH STACK (choose a simple, modern stack)
+- Frontend: React + TypeScript + Vite (preferred) OR Next.js (only if it doesn’t bloat)
+- Styling: TailwindCSS
+- Storage: IndexedDB via a small helper (e.g., idb)
+- Maps: choose ONE lightweight approach:
+  Option A: MapLibre GL + free tiles (allow configuring tile URL)
+  Option B: Leaflet (lighter) + OpenStreetMap tiles
+- PWA: service worker + manifest + offline caching of app shell
+- Optional backend: simple Express (Node) with SQLite OR none. Default is NONE.
+
+FEATURES (must implement)
+A) Onboarding
+- Landing page with crisp value prop + “Start a Run” CTA
+- Permission flow: explain location permission; handle denied state elegantly
+- Ask for optional audio/voice permission and explain “KM audio cues”.
+
+B) Live Run Screen
+- Big primary metric: current pace (min/km) and elapsed time
+- Secondary: distance (km), avg pace, speed, GPS accuracy indicator
+- Start / Pause / Resume / Finish buttons with haptics-like UI feedback
+- Auto-pause option (toggle): detect stops with speed threshold
+- Background guidance: keep screen awake (where possible), dark-mode support
+- Audio controls in-run:
+  - Toggle “Voice Coach”
+  - Volume slider (if feasible) or rely on system volume
+  - Choose voice language (at least English; optional: Italian/French)
+  - Choose cue frequency: every 1 km (default), 0.5 km, 2 km (optional)
+
+C) Voice Coach (MUST IMPLEMENT)
+- Use the Web Speech API (SpeechSynthesis) for text-to-speech.
+- On each completed kilometer:
+  1) Announce the split: “1 kilometer. Split: 5 minutes 12 seconds.”
+  2) Announce total time and average pace (optional but nice): “Total: 10 minutes 25 seconds. Average pace: 5:12 per kilometer.”
+  3) Add a short motivational phrase chosen randomly from a curated list.
+- Provide a curated list of ~30 short, high-quality encouragement phrases (not cringe), e.g.:
+  “Strong and steady.” / “Nice work—keep the rhythm.” / “You’re building momentum.” / “Great pace—hold it.” etc.
+- Prevent repeated triggers:
+  - Track last announced km integer
+  - Only speak once per threshold crossing
+- Handle edge cases:
+  - If SpeechSynthesis unavailable, fallback to beep/vibration + on-screen toast.
+  - If user muted voice coach, still show a toast: “KM 3 split: …”
+  - Ensure announcements don’t overlap: queue management/cancel previous speech before speaking new cue.
+- UX detail:
+  - Show a small “Now speaking…” indicator and the last spoken text in the UI.
+
+D) Route Tracking
+- Record GPS points with timestamp + accuracy
+- Filter noisy points: ignore points with poor accuracy; apply simple smoothing
+- Distance calculation using Haversine
+- Show polyline on map (live)
+- Show split times (per km) after finish (must align with voice announcements)
+
+E) Activity Summary
+- Route map preview + stats
+- “Save” activity locally
+- “Share” as an image card (generate a shareable PNG from a canvas/SVG; no server)
+
+F) Activities Feed (local)
+- List of past runs with date, distance, time, avg pace
+- Tap to open details
+- Delete / export data (JSON)
+
+G) Badge System
+Implement badges that unlock locally:
+- First Run
+- 5K completed
+- 10K completed
+- 3 runs in 7 days (streak-ish)
+- Fast 1K (pace threshold configurable)
+- Early Bird (run started before 7:00)
+Provide:
+- Badge definitions as data
+- Badge evaluation logic after each saved activity
+- Badge gallery screen with locked/unlocked states + delightful animations
+
+H) Settings
+- Units (km/mi)
+- Auto-pause toggle
+- GPS accuracy threshold (default sensible)
+- Voice Coach:
+  - Enable/disable
+  - Cue frequency (1 km default)
+  - Voice/language selector (when supported)
+  - Test button: “Play sample”
+- Export all data JSON
+- Reset app
+
+UX / UI REQUIREMENTS
+- Mobile-first layout, thumb-friendly controls, large tap targets
+- Design system: clean typography, spacing, rounded cards, subtle shadows
+- Dark mode toggle OR system dark mode
+- Skeleton loaders + graceful empty states
+- Micro-interactions: button press states, success toasts, badge unlock animation
+- Error states: no GPS, permission denied, low accuracy, airplane mode
+- Must feel “premium” but minimal
+
+PERFORMANCE REQUIREMENTS
+- Keep render loop light; avoid re-rendering map excessively
+- GPS sampling: default every ~1s but adaptive to speed/battery
+- Memoize computed stats; compute distance incrementally
+- Offline-first: app must load offline after first install
+
+DELIVERABLES
+1) A complete runnable Replit project (build + run instructions)
+2) Clear README:
+   - How to run
+   - How PWA install works
+   - Limitations (background tracking constraints on mobile web)
+   - SpeechSynthesis constraints (device/browser support, language availability)
+   - How to configure map tiles
+3) Project structure that is clean and maintainable
+4) Include a minimal test or sanity-check for distance calculation (optional but preferred)
+
+IMPORTANT IMPLEMENTATION NOTES
+- Use the browser Geolocation API (watchPosition) with high accuracy option.
+- Handle iOS quirks lightly, but prioritize Android/Samsung Chrome.
+- Explicitly explain in README that background GPS in mobile web can be limited by OS; keep tracking reliable in foreground.
+- Do not require login. If you add sync, keep it optional behind a feature flag.
+
+START NOW
+Generate the entire codebase with all files. Provide the file tree, then the code.
