@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { RoutePoint } from '@shared/schema';
+import { compressRouteForStorage } from "@/lib/route-compress";
 
 // Accept only reasonably accurate points
 const MAX_ACCEPTED_ACCURACY_M = 35;
@@ -157,7 +158,7 @@ export function useRunTracker() {
 
   const getRunData = useCallback(() => {
     const d = distanceRef.current;
-    const r = routeRef.current;
+    const r = compressRouteForStorage(routeRef.current);
     const dur = durationRef.current;
     return {
       startTime: new Date(startTimeRef.current),
