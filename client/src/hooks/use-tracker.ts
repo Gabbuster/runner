@@ -189,13 +189,15 @@ export function useRunTracker() {
   const pauseRun = useCallback(() => {
     setIsPaused(true);
     pausedRef.current = true;
-  }, []);
-
+    clearWatch();
+  }, [clearWatch]);
+  
   const resumeRun = useCallback(() => {
     setIsPaused(false);
     pausedRef.current = false;
-  }, []);
-
+    attachWatch();
+  }, [attachWatch]);
+  
   const stopRun = useCallback(() => {
     setIsActive(false);
     setIsPaused(false);
