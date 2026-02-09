@@ -72,6 +72,9 @@ function MapController({
     map.setView(position, map.getZoom(), { animate: false });
   }, [position, followUser, map]);
 
+  return null;
+}
+
 interface MapProps {
   route: RoutePoint[];
   currentPosition: [number, number] | null;
@@ -83,7 +86,7 @@ interface MapProps {
 
 export function RunMap({ route, currentPosition, interactive = true, compact = false, showRecenter = true, className = '' }: MapProps) {
   const [followUser, setFollowUser] = useState(true);
-  const positions: [number, number][]>(
+  const positions = useMemo<[number, number][]>(
     () => route.map((p) => [p.latitude, p.longitude]),
     [route]
   );
