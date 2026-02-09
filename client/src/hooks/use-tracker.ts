@@ -47,10 +47,7 @@ export function useRunTracker() {
   const lastAcceptedTsRef = useRef<number>(0);
   const lastUiTsRef = useRef<number>(0);
   const mountedRef = useRef(true);
-  const lastAcceptedTsRef = useRef<number>(0); // last time we accepted/stored a point
-  const lastUiTsRef = useRef<number>(0);       // last time we updated React UI
-
-
+  
   useEffect(() => { pausedRef.current = isPaused; }, [isPaused]);
 
   useEffect(() => {
