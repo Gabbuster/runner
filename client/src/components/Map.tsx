@@ -8,6 +8,21 @@ const TILES = 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.pn
 const LABEL_TILES = 'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png';
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
+function haversineMeters(a: [number, number], b: [number, number]) {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLon = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
 function MapController({
   position,
   followUser,
@@ -19,7 +34,10 @@ function MapController({
 }) {
   const map = useMap();
   const hasInitialized = useRef(false);
-
+  const lastPanRef = useRef<{ ts: number; pos: [number, number] | null }>({
+  ts: 0,
+  pos: null,
+});
   useEffect(() => {
     const handler = () => onUserInteraction();
     map.on('dragstart', handler);
@@ -31,18 +49,28 @@ function MapController({
   }, [map, onUserInteraction]);
 
   useEffect(() => {
-    if (position && followUser) {
-      if (!hasInitialized.current) {
-        map.setView(position, 16, { animate: false });
-        hasInitialized.current = true;
-      } else {
-        map.panTo(position, { animate: true, duration: 0.5 });
-      }
-    }
-  }, [position, followUser, map]);
+    if (!position || !followUser) return;
 
-  return null;
-}
+    const now = Date.now();
+
+    if (!hasInitialized.current) {
+    map.setView(position, 16, { animate: false });
+    hasInitialized.current = true;
+    lastPanRef.current = { ts: now, pos: position };
+    return;
+    }
+
+    const last = lastPanRef.current.pos;
+    const moved = last ? haversineMeters(last, position) : Infinity;
+
+    // throttle: at most once per second, and only if moved > 8m
+    if (now - lastPanRef.current.ts < 1000 && moved < 8) return;
+
+    lastPanRef.current = { ts: now, pos: position };
+
+    // no animation during tracking (battery/CPU win)
+    map.setView(position, map.getZoom(), { animate: false });
+  }, [position, followUser, map]);
 
 interface MapProps {
   route: RoutePoint[];
