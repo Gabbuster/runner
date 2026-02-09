@@ -80,74 +80,70 @@ export function useRunTracker() {
 
     watchId.current = navigator.geolocation.watchPosition(
       (pos) => {
-  if (!mountedRef.current) return;
+        if (!mountedRef.current) return;
 
-  const { latitude, longitude, accuracy, speed, heading } = pos.coords;
-  const nowTs = pos.timestamp;
+        const { latitude, longitude, accuracy, speed, heading } = pos.coords;
+        const nowTs = pos.timestamp;
 
-  // Throttle UI marker updates (reduce React rerenders)
-  if (nowTs - lastUiTsRef.current >= 500) {
-    lastUiTsRef.current = nowTs;
-    setCurrentPosition([latitude, longitude]);
-    setGpsError(null);
-  }
+        // Throttle UI marker updates
+        if (nowTs - lastUiTsRef.current >= UI_UPDATE_INTERVAL_MS) {
+          lastUiTsRef.current = nowTs;
+          setCurrentPosition([latitude, longitude]);
+          setGpsError(null);
+        }
 
-  // If paused, don't record track points
-  if (pausedRef.current) return;
+        if (pausedRef.current) return;
 
-  // Drop noisy points
-  if (accuracy == null || accuracy > 35) return;
+        // Drop noisy points
+        if (accuracy == null || accuracy > MAX_ACCEPTED_ACCURACY_M) return;
 
-  const prev = routeRef.current;
-  const last = prev.length > 0 ? prev[prev.length - 1] : null;
+        const prev = routeRef.current;
+        const last = prev.length > 0 ? prev[prev.length - 1] : null;
 
-  if (last) {
-    const dtMs = nowTs - last.timestamp;
-    const dM = haversine(last.latitude, last.longitude, latitude, longitude);
+        if (last) {
+          const dtMs = nowTs - last.timestamp;
+          const dM = haversine(last.latitude, last.longitude, latitude, longitude);
 
-    // Ignore GPS spikes
-    if (dM > 80) return;
+          // Ignore GPS spikes
+          if (dM > MAX_JUMP_DISTANCE_M) return;
 
-    // Key optimization: time + distance gate (prevents point spam)
-    if (dtMs < 2000 && dM < 5) return;
+          // Time + distance gate
+          if (dtMs < MIN_TIME_BETWEEN_POINTS_MS && dM < MIN_DISTANCE_BETWEEN_POINTS_M) return;
 
-    // Speed sanity check (reject unrealistic jumps)
-    const computedSpeed = dtMs > 0 ? (dM / (dtMs / 1000)) : (speed ?? 0);
-    if (computedSpeed > 8) return;
+          // Speed sanity check
+          const computedSpeed = dtMs > 0 ? dM / (dtMs / 1000) : (speed ?? 0);
+          if (computedSpeed > MAX_RUN_SPEED_MPS) return;
 
-    // Accumulate distance only for accepted segments
-    distanceRef.current += dM;
-    setDistance(distanceRef.current);
+          distanceRef.current += dM;
+          setDistance(distanceRef.current);
 
-    // Pace using computed speed (GPS speed is often null/unreliable)
-    if (computedSpeed > 0.3) {
-      setCurrentPace((1000 / computedSpeed) / 60);
-    }
-  }
+          if (computedSpeed > 0.3) {
+            setCurrentPace((1000 / computedSpeed) / 60);
+          }
+        }
 
-  const point: RoutePoint = {
-    latitude,
-    longitude,
-    timestamp: nowTs,
-    accuracy,
-    speed,
-    heading,
-  };
+        const point: RoutePoint = {
+          latitude,
+          longitude,
+          timestamp: nowTs,
+          accuracy,
+          speed,
+          heading,
+        };
 
-  // Keep full route in ref
-  routeRef.current = [...prev, point];
+        routeRef.current = [...prev, point];
 
-  // Throttle map rerender (setRoute) to max 2 Hz
-  if (nowTs - lastRouteUiTsRef.current >= 500) {
-    lastRouteUiTsRef.current = nowTs;
-    setRoute(routeRef.current);
-  }
-}
+        // Throttle map polyline re-render
+        if (nowTs - lastRouteUiTsRef.current >= UI_UPDATE_INTERVAL_MS) {
+          lastRouteUiTsRef.current = nowTs;
+          setRoute(routeRef.current);
+        }
+      },
       (err) => {
         if (!mountedRef.current) return;
-        if (err.code === 1) setGpsError('Location access denied. Please enable GPS permissions.');
-        else if (err.code === 2) setGpsError('GPS signal unavailable. Move to an open area.');
-        else setGpsError('GPS timed out. Retrying...');
+        if (err.code === 1) setGpsError("Location access denied. Please enable GPS permissions.");
+        else if (err.code === 2) setGpsError("GPS signal unavailable. Move to an open area.");
+        else setGpsError("GPS timed out. Retrying...");
       },
       { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
     );
