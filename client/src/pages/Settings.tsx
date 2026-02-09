@@ -1,53 +1,16 @@
-import { useSyncRuns } from "@/hooks/use-runs";
-import { Cloud, Volume2, Moon, Ruler } from "lucide-react";
+import { Volume2, Moon, Ruler } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Settings() {
-  const { mutateAsync: sync, isPending } = useSyncRuns();
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [useMetric, setUseMetric] = useState(true);
-
-  const handleSync = async () => {
-    try {
-      const count = await sync();
-      toast({
-        title: "Sync Complete",
-        description: `Synced ${count} runs to the cloud.`,
-      });
-    } catch (e) {
-      toast({
-        title: "Sync Failed",
-        description: "Could not connect to server.",
-        variant: "destructive"
-      });
-    }
-  };
+    };
 
   return (
     <div className="min-h-screen bg-background pb-24 px-6 pt-12 max-w-md mx-auto" data-testid="settings-screen">
       <h1 className="text-4xl font-display font-bold text-foreground mb-8">Settings</h1>
 
       <div className="space-y-6">
-        {/* Sync Section */}
-        <div className="bg-card border border-border rounded-2xl p-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="bg-primary/20 p-3 rounded-xl">
-               <Cloud className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-bold">Cloud Sync</h3>
-              <p className="text-sm text-muted-foreground">Backup your runs</p>
-            </div>
-          </div>
-          <button 
-            onClick={handleSync}
-            disabled={isPending}
-            className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl active:scale-95 transition-transform disabled:opacity-50"
-          >
-            {isPending ? "Syncing..." : "Sync Now"}
-          </button>
-        </div>
+
 
         {/* Toggles */}
         <div className="bg-card border border-border rounded-2xl divide-y divide-border/50">
