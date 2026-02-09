@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMap, ZoomControl } from 'react-leaflet';
 import { RoutePoint } from '@shared/schema';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import 'leaflet/dist/leaflet.css';
 import { Crosshair } from 'lucide-react';
 
@@ -83,7 +83,10 @@ interface MapProps {
 
 export function RunMap({ route, currentPosition, interactive = true, compact = false, showRecenter = true, className = '' }: MapProps) {
   const [followUser, setFollowUser] = useState(true);
-  const positions: [number, number][] = route.map(p => [p.latitude, p.longitude]);
+  const positions: [number, number][]>(
+    () => route.map((p) => [p.latitude, p.longitude]),
+    [route]
+  );
   const center: [number, number] = currentPosition || [41.9028, 12.4964];
 
   const handleUserInteraction = useCallback(() => {
@@ -98,12 +101,18 @@ export function RunMap({ route, currentPosition, interactive = true, compact = f
     <div className={`relative w-full h-full ${className}`} data-testid="map-container">
       <MapContainer
         center={center}
-        zoom={compact ? 15 : 16}
-        scrollWheelZoom={interactive}
+        zoom={16}
+        scrollWheelZoom={false}
         dragging={interactive}
+        touchZoom={interactive}
+        doubleClickZoom={false}
         zoomControl={false}
         attributionControl={false}
         className="w-full h-full run-map"
+        preferCanvas={true}
+        zoomAnimation={false}
+        fadeAnimation={false}
+        markerZoomAnimation={false}
       >
         <TileLayer url={TILES} attribution={ATTRIBUTION} />
         <TileLayer url={LABEL_TILES} opacity={0.35} />
@@ -112,6 +121,7 @@ export function RunMap({ route, currentPosition, interactive = true, compact = f
           <>
             <Polyline
               positions={positions}
+              smoothFactor={1}
               pathOptions={{
                 color: 'rgba(0,0,0,0.4)',
                 weight: 7,
@@ -121,6 +131,7 @@ export function RunMap({ route, currentPosition, interactive = true, compact = f
             />
             <Polyline
               positions={positions}
+              smoothFactor={1}
               pathOptions={{
                 color: '#b0ff2b',
                 weight: 4,
